@@ -1,0 +1,758 @@
+// AnalyzerLpnE15.cc
+#include"AnalyzerLpnE15.hh"
+
+AnalyzerLpnE15::AnalyzerLpnE15()
+{
+    _is_created = false;
+    _root_file_name = "tmp.root";
+    _pdf_file_name = _root_file_name.substr(_root_file_name.find_last_of("/"),_root_file_name.find_first_of("."));
+    _pdf_file_name.append(".pdf");
+    _pdf_file_name.insert(0,"./fig/tmp");
+    CreateRootFile("recreate");
+    random = new TRandom3(0);
+    _print_th1_names.clear();
+    _log_th1_names.clear();
+    _print_th2_names.clear();
+    _log_th2_names.clear();
+}
+
+AnalyzerLpnE15::AnalyzerLpnE15(std::string file_name, std::string option)
+{
+    _is_created = false;
+    _root_file_name = file_name;
+    _pdf_file_name = _root_file_name.substr(_root_file_name.find_last_of("/"),_root_file_name.find_last_of(".")-_root_file_name.find_last_of("/"));
+    _pdf_file_name.append(".pdf");
+    _pdf_file_name.insert(0,"./fig/tmp");
+    CreateRootFile(option);
+    random = new TRandom3(0);
+    _print_th1_names.clear();
+    _log_th1_names.clear();
+    _print_th2_names.clear();
+    _log_th2_names.clear();
+}
+
+AnalyzerLpnE15::~AnalyzerLpnE15()
+{
+    if(_root_file){
+        if(_is_created){
+            _root_file->Write();
+        }
+        _root_file->Close();
+    }
+    _print_th1_names.clear();
+    _log_th1_names.clear();
+    _print_th2_names.clear();
+    _log_th2_names.clear();
+    delete random;
+}
+
+void AnalyzerLpnE15::CreateRootFile(std::string option)
+{
+    _root_file = new TFile(_root_file_name.data(),option.data());
+    if(option=="read"||option=="READ"){
+        return;
+    }
+    _root_file->cd();
+    const char* meas_type[15] = {"gene","acce_lp","meas_lp","acce_ln","meas_ln","acce_ln_true","meas_ln_true","acce_ln_fake","meas_ln_fake","acce_lpn","meas_lpn","acce_lpn_true","meas_lpn_true","acce_lpn_fake","meas_lpn_fake"};
+
+    for(Int_t i_type=0; i_type<15; i_type++){
+
+        // 1D histograms ------------------------------------------------------------------------------
+        new TH1F(Form("beam_momentum_lab_%s",meas_type[i_type]),"Momentum of K^{-}-beam;#font[12]{p}_{K^{-}}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("lambda_momentum_lab_%s",meas_type[i_type]),"Momentum of #Lambda;#font[12]{p}_{#Lambda}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("proton_momentum_lab_%s",meas_type[i_type]),"Momentum of proton;#font[12]{p}_{#font[12]{p}}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("neutron_momentum_lab_%s",meas_type[i_type]),"Momentum of neutron;#font[12]{p}_{#font[12]{n}}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("pi_from_lambda_momentum_lab_%s",meas_type[i_type]),"Momentum of #pi from #Lambda;#font[12]{p}_{#pi from #Lambda}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("nucleon_from_lambda_momentum_lab_%s",meas_type[i_type]),"Momentum of nucleon from #Lambda;#font[12]{p}_{#font[12]{N} from #Lambda}^{lab} (GeV/#font[12]{c});Counts", 150, 0., 1.5);
+        new TH1F(Form("lambda_mass_%s",meas_type[i_type]),"Mass of #Lambda;#font[12]{m}_{#Lambda}^{lab} (GeV/#font[12]{c}^{2});Counts", 150, 1.05, 1.20);
+        new TH1F(Form("proton_mass_%s",meas_type[i_type]),"Mass of proton;#font[12]{m}_{#font[12]{p}}^{lab} (GeV/#font[12]{c}^{2});Counts", 150, 0.3, 1.8);
+        new TH1F(Form("neutron_mass_%s",meas_type[i_type]),"Mass of neutron;#font[12]{m}_{#font[12]{n}}^{lab} (GeV/#font[12]{c}^{2});Counts", 150, 0.3, 1.8);
+        new TH1F(Form("lp_mass_%s",meas_type[i_type]),"Mass of #Lambdap;#font[12]{m}_{#Lambda#font[12]{p}}^{lab} (GeV/#font[12]{c}^{2});Counts", 100, 2.0, 3.0);
+        new TH1F(Form("lp_momtrans_%s",meas_type[i_type]),"Momentum transfer of #Lambdap;#font[12]{q}_{#Lambda#font[12]{p}}^{lab} (GeV/#font[12]{c});Counts", 200, 0.0, 2.0);
+        new TH1F(Form("ln_mass_%s",meas_type[i_type]),"Mass of #Lambdan;#font[12]{m}_{#Lambda#font[12]{n}}^{lab} (GeV/#font[12]{c}^{2});Counts", 100, 2.0, 3.0);
+        new TH1F(Form("ln_momtrans_%s",meas_type[i_type]),"Momentum transfer of #Lambdan;#font[12]{q}_{#Lambda#font[12]{n}}^{lab} (GeV/#font[12]{c});Counts", 200, 0.0, 2.0);
+        // 1D histograms ------------------------------------------------------------------------------
+
+
+        // 2D histograms ------------------------------------------------------------------------------
+        new TH2F(Form("beam_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of K^{-}-beam (lab. frame);cos#theta_{K^{-}}^{lab};#phi_{K^{-}}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("lambda_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of #Lambda (lab. frame);cos#theta_{#Lambda}^{lab};#phi_{#Lambda}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("proton_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of proton (lab. frame);cos#theta_{#font[12]{p}}^{lab};#phi_{#font[12]{p}}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("neutron_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of neutron (lab. frame);cos#theta_{#font[12]{n}}^{lab};#phi_{#font[12]{n}}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("pi_from_lambda_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of pi_from_lambda (lab. frame);cos#theta_{#pi from #Lambda}^{lab};#phi_{#font[12]{n}}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("nucleon_from_lambda_cos_theta_vs_phi_lab_%s",meas_type[i_type]),"cos#theta vs. phi of nucleon_from_lambda (lab. frame);cos#theta_{#font[12]{N} from #Lambda}^{lab};#phi_{#font[12]{N} from #Lambda}^{lab}", 50,-1.,1.,50,-TMath::Pi(),TMath::Pi());
+        new TH2F(Form("lp_mass_vs_momtrans_%s",meas_type[i_type]),"Mass vs. momentum transfer of #Lambdap;#font[12]{m}_{#Lambda#font[12]{p}} (GeV/#font[12]{c}^{2});#font[12]{q}_{#Lambda#font[12]{p}} (GeV/#font[12]{c})", 50,2.,3.,100,0.,2.);
+        new TH2F(Form("ln_mass_vs_momtrans_%s",meas_type[i_type]),"Mass vs. momentum transfer of #Lambdan;#font[12]{m}_{#Lambda#font[12]{n}} (GeV/#font[12]{c}^{2});#font[12]{q}_{#Lambda#font[12]{n}} (GeV/#font[12]{c})", 50,2.,3.,100,0.,2.);
+        // 2D histograms ------------------------------------------------------------------------------
+
+    }
+
+    // for neutral detection
+    new TH2F("neutral_over_beta_vs_energy_deposit_meas","1/#beta vs. dE of neutral particle;1/#beta;dE (MeVee)", 100, 0.0, 10.0, 100, 0.0, 100.0);
+
+    _is_created = true;
+}
+
+void AnalyzerLpnE15::DoAnalysis(MCData* mcData, DetectorData* detectorData, AnalyzedDataE15* analyzedData)
+{
+
+    // ============================================================================================
+    // For MCData =================================================================================
+    // ============================================================================================
+    Int_t total_tracks = mcData->trackSize();   
+
+    TVector3 vec_vertex_reaction(0.,0.,0.);
+    TLorentzVector lv_beam_mc(0.,0.,0.,0.);
+    TLorentzVector lv_lambda_mc(0.,0.,0.,0.);
+    TLorentzVector lv_proton_mc(0.,0.,0.,0.);
+    TLorentzVector lv_neutron_mc(0.,0.,0.,0.);
+    Int_t track_id_lambda = 0;
+    // check generated particle (parentTrackID==0)
+    for(Int_t i_track = 0; i_track<total_tracks; i_track++){
+        Track* track = mcData->track(i_track);
+        if(track->parentTrackID()!=0) continue;
+        Int_t pdg_id = track->pdgID();
+        if(pdg_id==321){ // K-beam
+            vec_vertex_reaction = track->vertex()*0.1; // cm
+            lv_beam_mc.SetVectM(-track->momentum()*0.001,kKaonMass);
+        }
+        else if(pdg_id==3122){ // Lambda
+            track_id_lambda = track->trackID();
+            lv_lambda_mc.SetVectM(track->momentum()*0.001,kLambdaMass);
+        }
+        else if(pdg_id==2212){ // proton
+            lv_proton_mc.SetVectM(track->momentum()*0.001,kProtonMass);
+        }
+        else if(pdg_id==2112){ // neutron
+            lv_neutron_mc.SetVectM(track->momentum()*0.001,kNeutronMass);
+        }
+    }
+
+    TVector3 vec_vertex_lambda_decay(0.,0.,0.);
+    TLorentzVector lv_pi_from_lambda_mc(0.,0.,0.,0.);
+    TLorentzVector lv_nucleon_from_lambda_mc(0.,0.,0.,0.);
+    bool is_lambda_decay_charged = false;
+    bool is_lambda_decay_neutral = false;
+    // check decay product (parentTrackID == track_id_lambda)
+    for(Int_t i_track = 0; i_track<total_tracks; i_track++){
+        Track* track = mcData->track(i_track);
+        if(track->parentTrackID()!=track_id_lambda) continue;
+        Int_t pdg_id = track->pdgID();
+        if(pdg_id==-211){ // pi-
+            is_lambda_decay_charged = true;
+            vec_vertex_lambda_decay = track->vertex()*0.1; // cm
+            lv_pi_from_lambda_mc.SetVectM(track->momentum()*0.001,kPiMass);
+        }
+        else if(pdg_id==111){
+            is_lambda_decay_neutral = true;
+            vec_vertex_lambda_decay = track->vertex()*0.1; // cm
+            lv_pi_from_lambda_mc.SetVectM(track->momentum()*0.001,kPi0Mass);
+        }
+        else if(pdg_id==2212){ // proton
+            lv_nucleon_from_lambda_mc.SetVectM(track->momentum()*0.001,kProtonMass);
+        }
+        else if(pdg_id==2112){ // neutron
+            lv_nucleon_from_lambda_mc.SetVectM(track->momentum()*0.001,kNeutronMass);
+        }
+    }
+    // ============================================================================================
+    // ============================================================================================
+    // ============================================================================================
+
+
+    // ============================================================================================
+    // For AnalyzedData ===========================================================================
+    // ============================================================================================
+    std::vector<Track*> measured_beam_tracks = analyzedData->measured_beam_tracks();
+    std::vector<Track*> measured_charged_tracks = analyzedData->measured_charged_tracks();
+    std::vector<Track*> measured_charged_capb_tracks = analyzedData->measured_charged_capb_tracks();
+    std::vector<Track*> measured_charged_capf_tracks = analyzedData->measured_charged_capf_tracks();
+    std::vector<Track*> measured_neutral_tracks = analyzedData->measured_neutral_tracks();
+    std::vector<Track*> measured_neutral_capb_tracks = analyzedData->measured_neutral_capb_tracks();
+    std::vector<Track*> measured_neutral_capf_tracks = analyzedData->measured_neutral_capf_tracks();
+    std::vector<Double_t> measured_neutral_energy_deposits = analyzedData->measured_neutral_energy_deposits();
+    std::vector<Double_t> measured_neutral_capb_energy_deposits = analyzedData->measured_neutral_capb_energy_deposits();
+    std::vector<Double_t> measured_neutral_capf_energy_deposits = analyzedData->measured_neutral_capf_energy_deposits();
+    std::vector<Double_t> measured_neutral_over_betas = analyzedData->measured_neutral_over_betas();
+    std::vector<Double_t> measured_neutral_capb_over_betas = analyzedData->measured_neutral_capb_over_betas();
+    std::vector<Double_t> measured_neutral_capf_over_betas = analyzedData->measured_neutral_capf_over_betas();
+
+    TLorentzVector lv_beam_meas(0.,0.,0.,0.);
+    TLorentzVector lv_proton_meas(0.,0.,0.,0.);
+    TLorentzVector lv_nucleon_from_lambda_meas(0.,0.,0.,0.);
+    TLorentzVector lv_pi_from_lambda_meas(0.,0.,0.,0.);
+    TLorentzVector lv_target_meas(0.,0.,0.,kThreeHeMass);
+    TLorentzVector lv_lambda_meas(0.,0.,0.,0.);
+    TLorentzVector lv_neutron_meas(0.,0.,0.,0.);
+    TLorentzVector lv_missing_proton_meas(0.,0.,0.,0.);
+    TLorentzVector lv_missing_neutron_meas(0.,0.,0.,0.);
+
+    bool is_beam_detected = false;
+    bool is_proton_detected = false;
+    bool is_neutron_detected = false;
+    bool is_true_neutron_detected = false;
+    bool is_fake_neutron_detected = false;
+    bool is_proton_from_lambda_detected = false;
+    bool is_pim_from_lambda_detected = false;
+
+    // beam
+    if(measured_beam_tracks.size()==1){
+        if(measured_beam_tracks[0]->pdgID()==-321){
+            is_beam_detected = true;
+            lv_beam_meas.SetVectM(measured_beam_tracks[0]->momentum(),kKaonMass);
+        }
+    }
+
+    // two protons & one pi-
+    for(std::vector<Track*>::iterator itr_measured_charged_tracks=measured_charged_tracks.begin(); itr_measured_charged_tracks!=measured_charged_tracks.end(); itr_measured_charged_tracks++){
+        Track* track = *itr_measured_charged_tracks;
+        if(track->pdgID()==2212){
+            if(track->parentTrackID()==0){
+                is_proton_detected = true;
+                lv_proton_meas.SetVectM(track->momentum(),kProtonMass);
+            }
+            else{
+                is_proton_from_lambda_detected = true;
+                lv_nucleon_from_lambda_meas.SetVectM(track->momentum(),kProtonMass);
+            }
+        }
+        else if(track->pdgID()==-211&&track->parentTrackID()!=0){
+            is_pim_from_lambda_detected = true;
+            lv_pi_from_lambda_meas.SetVectM(track->momentum(),kPiMass);
+        }
+    }
+    // neutron
+    if(measured_neutral_tracks.size()==1){
+        Int_t parent_id = measured_neutral_tracks[0]->parentTrackID();
+        is_neutron_detected = true;
+        lv_neutron_meas.SetVectM(measured_neutral_tracks[0]->momentum(),kNeutronMass);
+        for(Int_t i_track = 0; i_track<total_tracks; i_track++){
+            Track* track = mcData->track(i_track);
+            if(track->trackID()==parent_id){
+                if(track->parentTrackID()!=0){
+                    parent_id = track->parentTrackID();
+                    i_track=0;
+                }
+                else{
+                    parent_id = 0;
+                    if(track->pdgID()==2112){
+                        is_true_neutron_detected = true;
+                    }
+                    else{
+                        is_fake_neutron_detected = true;
+                    }
+                }
+            }
+        }
+        if(parent_id!=0){
+            is_fake_neutron_detected = true;
+        }
+    }
+
+    lv_lambda_meas = lv_nucleon_from_lambda_meas + lv_pi_from_lambda_meas;
+    lv_missing_proton_meas = (lv_beam_meas+lv_target_meas) - (lv_lambda_meas+lv_neutron_meas);
+    lv_missing_neutron_meas = (lv_beam_meas+lv_target_meas) - (lv_lambda_meas+lv_proton_meas);
+
+    bool is_accepted_lp = is_beam_detected & is_proton_detected & is_proton_from_lambda_detected & is_pim_from_lambda_detected;
+    bool is_accepted_ln = is_beam_detected & is_neutron_detected & is_proton_from_lambda_detected & is_pim_from_lambda_detected;
+    bool is_accepted_ln_true = is_beam_detected & is_true_neutron_detected & is_proton_from_lambda_detected & is_pim_from_lambda_detected;
+    bool is_accepted_ln_fake = is_beam_detected & is_fake_neutron_detected & is_proton_from_lambda_detected & is_pim_from_lambda_detected;
+    bool is_accepted_lpn = is_accepted_lp & is_accepted_ln;
+    bool is_accepted_lpn_true = is_accepted_lp & is_accepted_ln_true;
+    bool is_accepted_lpn_fake = is_accepted_lp & is_accepted_ln_fake;
+    // ============================================================================================
+    // ============================================================================================
+    // ============================================================================================
+
+
+    // ============================================================================================
+    // FILLING HISTOGRAMS =========================================================================
+    // ============================================================================================
+    Fill("beam_momentum_lab_gene",lv_beam_mc.Vect().Mag());
+    Fill("lambda_momentum_lab_gene",lv_lambda_mc.Vect().Mag());
+    Fill("proton_momentum_lab_gene",lv_proton_mc.Vect().Mag());
+    Fill("neutron_momentum_lab_gene",lv_neutron_mc.Vect().Mag());
+    Fill("pi_from_lambda_momentum_lab_gene",lv_pi_from_lambda_mc.Vect().Mag());
+    Fill("nucleon_from_lambda_momentum_lab_gene",lv_nucleon_from_lambda_mc.Vect().Mag());
+    Fill("lambda_mass_gene",lv_lambda_mc.M());
+    Fill("proton_mass_gene",lv_proton_mc.M());
+    Fill("neutron_mass_gene",lv_neutron_mc.M());
+    Fill("lp_mass_gene",(lv_lambda_mc+lv_proton_mc).M());
+    Fill("lp_momtrans_gene",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+    Fill("ln_mass_gene",(lv_lambda_mc+lv_neutron_mc).M());
+    Fill("ln_momtrans_gene",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+    Fill("beam_cos_theta_vs_phi_lab_gene",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+    Fill("lambda_cos_theta_vs_phi_lab_gene",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+    Fill("proton_cos_theta_vs_phi_lab_gene",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+    Fill("neutron_cos_theta_vs_phi_lab_gene",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+    Fill("pi_from_lambda_cos_theta_vs_phi_lab_gene",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+    Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_gene",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+    Fill("lp_mass_vs_momtrans_gene",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+    Fill("ln_mass_vs_momtrans_gene",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+    for(UInt_t i_meas=0; i_meas<measured_neutral_energy_deposits.size(); i_meas++){
+        Fill("neutral_over_beta_vs_energy_deposit_meas",measured_neutral_over_betas[i_meas],measured_neutral_energy_deposits[i_meas]);
+    }
+
+    if(is_accepted_lp){
+        Fill("beam_momentum_lab_acce_lp",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_lp",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_lp",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_lp",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_lp",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_lp",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_lp",lv_lambda_mc.M());
+        Fill("proton_mass_acce_lp",lv_proton_mc.M());
+        Fill("neutron_mass_acce_lp",lv_neutron_mc.M());
+        Fill("lp_mass_acce_lp",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_lp",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_lp",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_lp",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_lp",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_lp",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_lp",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_lp",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_lp",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_lp",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_lp",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_lp",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_lp",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_lp",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_lp",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_lp",lv_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_lp",lv_missing_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_lp",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_lp",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_lp",lv_lambda_meas.M());
+        Fill("proton_mass_meas_lp",lv_proton_meas.M());
+        Fill("neutron_mass_meas_lp",lv_missing_neutron_meas.M());
+        Fill("lp_mass_meas_lp",(lv_lambda_meas+lv_proton_meas).M());
+        Fill("lp_momtrans_meas_lp",(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_lp",(lv_lambda_meas+lv_missing_neutron_meas).M());
+        Fill("ln_momtrans_meas_lp",(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_lp",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_lp",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_lp",lv_proton_meas.Vect().CosTheta(),lv_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_lp",lv_missing_neutron_meas.Vect().CosTheta(),lv_missing_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_lp",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_lp",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_lp",(lv_lambda_meas+lv_proton_meas).M(),(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_lp",(lv_lambda_meas+lv_missing_neutron_meas).M(),(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_ln){
+        Fill("beam_momentum_lab_acce_ln",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_ln",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_ln",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_ln",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_ln",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_ln",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_ln",lv_lambda_mc.M());
+        Fill("proton_mass_acce_ln",lv_proton_mc.M());
+        Fill("neutron_mass_acce_ln",lv_neutron_mc.M());
+        Fill("lp_mass_acce_ln",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_ln",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_ln",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_ln",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_ln",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_ln",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_ln",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_ln",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_ln",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_ln",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_ln",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_ln",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_ln",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_ln",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_ln",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_ln",lv_missing_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_ln",lv_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_ln",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_ln",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_ln",lv_lambda_meas.M());
+        Fill("proton_mass_meas_ln",lv_missing_proton_meas.M());
+        Fill("neutron_mass_meas_ln",lv_neutron_meas.M());
+        Fill("lp_mass_meas_ln",(lv_lambda_meas+lv_missing_proton_meas).M());
+        Fill("lp_momtrans_meas_ln",(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_ln",(lv_lambda_meas+lv_neutron_meas).M());
+        Fill("ln_momtrans_meas_ln",(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_ln",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_ln",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_ln",lv_missing_proton_meas.Vect().CosTheta(),lv_missing_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_ln",lv_neutron_meas.Vect().CosTheta(),lv_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_ln",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_ln",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_ln",(lv_lambda_meas+lv_missing_proton_meas).M(),(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_ln",(lv_lambda_meas+lv_neutron_meas).M(),(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_ln_true){
+        Fill("beam_momentum_lab_acce_ln_true",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_ln_true",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_ln_true",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_ln_true",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_ln_true",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_ln_true",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_ln_true",lv_lambda_mc.M());
+        Fill("proton_mass_acce_ln_true",lv_proton_mc.M());
+        Fill("neutron_mass_acce_ln_true",lv_neutron_mc.M());
+        Fill("lp_mass_acce_ln_true",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_ln_true",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_ln_true",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_ln_true",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_ln_true",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_ln_true",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_ln_true",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_ln_true",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_ln_true",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_ln_true",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_ln_true",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_ln_true",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_ln_true",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_ln_true",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_ln_true",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_ln_true",lv_missing_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_ln_true",lv_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_ln_true",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_ln_true",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_ln_true",lv_lambda_meas.M());
+        Fill("proton_mass_meas_ln_true",lv_missing_proton_meas.M());
+        Fill("neutron_mass_meas_ln_true",lv_neutron_meas.M());
+        Fill("lp_mass_meas_ln_true",(lv_lambda_meas+lv_missing_proton_meas).M());
+        Fill("lp_momtrans_meas_ln_true",(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_ln_true",(lv_lambda_meas+lv_neutron_meas).M());
+        Fill("ln_momtrans_meas_ln_true",(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_ln_true",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_ln_true",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_ln_true",lv_missing_proton_meas.Vect().CosTheta(),lv_missing_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_ln_true",lv_neutron_meas.Vect().CosTheta(),lv_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_ln_true",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_ln_true",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_ln_true",(lv_lambda_meas+lv_missing_proton_meas).M(),(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_ln_true",(lv_lambda_meas+lv_neutron_meas).M(),(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_ln_fake){
+        Fill("beam_momentum_lab_acce_ln_fake",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_ln_fake",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_ln_fake",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_ln_fake",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_ln_fake",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_ln_fake",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_ln_fake",lv_lambda_mc.M());
+        Fill("proton_mass_acce_ln_fake",lv_proton_mc.M());
+        Fill("neutron_mass_acce_ln_fake",lv_neutron_mc.M());
+        Fill("lp_mass_acce_ln_fake",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_ln_fake",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_ln_fake",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_ln_fake",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_ln_fake",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_ln_fake",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_ln_fake",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_ln_fake",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_ln_fake",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_ln_fake",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_ln_fake",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_ln_fake",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_ln_fake",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_ln_fake",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_ln_fake",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_ln_fake",lv_missing_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_ln_fake",lv_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_ln_fake",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_ln_fake",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_ln_fake",lv_lambda_meas.M());
+        Fill("proton_mass_meas_ln_fake",lv_missing_proton_meas.M());
+        Fill("neutron_mass_meas_ln_fake",lv_neutron_meas.M());
+        Fill("lp_mass_meas_ln_fake",(lv_lambda_meas+lv_missing_proton_meas).M());
+        Fill("lp_momtrans_meas_ln_fake",(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_ln_fake",(lv_lambda_meas+lv_neutron_meas).M());
+        Fill("ln_momtrans_meas_ln_fake",(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_ln_fake",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_ln_fake",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_ln_fake",lv_missing_proton_meas.Vect().CosTheta(),lv_missing_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_ln_fake",lv_neutron_meas.Vect().CosTheta(),lv_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_ln_fake",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_ln_fake",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_ln_fake",(lv_lambda_meas+lv_missing_proton_meas).M(),(lv_lambda_meas+lv_missing_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_ln_fake",(lv_lambda_meas+lv_neutron_meas).M(),(lv_lambda_meas+lv_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_lpn){
+        Fill("beam_momentum_lab_acce_lpn",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_lpn",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_lpn",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_lpn",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_lpn",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_lpn",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_lpn",lv_lambda_mc.M());
+        Fill("proton_mass_acce_lpn",lv_proton_mc.M());
+        Fill("neutron_mass_acce_lpn",lv_neutron_mc.M());
+        Fill("lp_mass_acce_lpn",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_lpn",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_lpn",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_lpn",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_lpn",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_lpn",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_lpn",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_lpn",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_lpn",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_lpn",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_lpn",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_lpn",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_lpn",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_lpn",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_lpn",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_lpn",lv_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_lpn",lv_missing_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_lpn",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_lpn",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_lpn",lv_lambda_meas.M());
+        Fill("proton_mass_meas_lpn",lv_proton_meas.M());
+        Fill("neutron_mass_meas_lpn",lv_missing_neutron_meas.M());
+        Fill("lp_mass_meas_lpn",(lv_lambda_meas+lv_proton_meas).M());
+        Fill("lp_momtrans_meas_lpn",(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_lpn",(lv_lambda_meas+lv_missing_neutron_meas).M());
+        Fill("ln_momtrans_meas_lpn",(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_lpn",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_lpn",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_lpn",lv_proton_meas.Vect().CosTheta(),lv_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_lpn",lv_missing_neutron_meas.Vect().CosTheta(),lv_missing_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_lpn",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_lpn",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_lpn",(lv_lambda_meas+lv_proton_meas).M(),(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_lpn",(lv_lambda_meas+lv_missing_neutron_meas).M(),(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_lpn_true){
+        Fill("beam_momentum_lab_acce_lpn_true",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_lpn_true",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_lpn_true",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_lpn_true",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_lpn_true",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_lpn_true",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_lpn_true",lv_lambda_mc.M());
+        Fill("proton_mass_acce_lpn_true",lv_proton_mc.M());
+        Fill("neutron_mass_acce_lpn_true",lv_neutron_mc.M());
+        Fill("lp_mass_acce_lpn_true",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_lpn_true",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_lpn_true",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_lpn_true",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_lpn_true",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_lpn_true",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_lpn_true",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_lpn_true",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_lpn_true",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_lpn_true",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_lpn_true",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_lpn_true",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_lpn_true",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_lpn_true",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_lpn_true",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_lpn_true",lv_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_lpn_true",lv_missing_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_lpn_true",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_lpn_true",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_lpn_true",lv_lambda_meas.M());
+        Fill("proton_mass_meas_lpn_true",lv_proton_meas.M());
+        Fill("neutron_mass_meas_lpn_true",lv_missing_neutron_meas.M());
+        Fill("lp_mass_meas_lpn_true",(lv_lambda_meas+lv_proton_meas).M());
+        Fill("lp_momtrans_meas_lpn_true",(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_lpn_true",(lv_lambda_meas+lv_missing_neutron_meas).M());
+        Fill("ln_momtrans_meas_lpn_true",(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_lpn_true",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_lpn_true",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_lpn_true",lv_proton_meas.Vect().CosTheta(),lv_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_lpn_true",lv_missing_neutron_meas.Vect().CosTheta(),lv_missing_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_lpn_true",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_lpn_true",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_lpn_true",(lv_lambda_meas+lv_proton_meas).M(),(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_lpn_true",(lv_lambda_meas+lv_missing_neutron_meas).M(),(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+    }
+
+    if(is_accepted_lpn_fake){
+        Fill("beam_momentum_lab_acce_lpn_fake",lv_beam_mc.Vect().Mag());
+        Fill("lambda_momentum_lab_acce_lpn_fake",lv_lambda_mc.Vect().Mag());
+        Fill("proton_momentum_lab_acce_lpn_fake",lv_proton_mc.Vect().Mag());
+        Fill("neutron_momentum_lab_acce_lpn_fake",lv_neutron_mc.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_acce_lpn_fake",lv_pi_from_lambda_mc.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_acce_lpn_fake",lv_nucleon_from_lambda_mc.Vect().Mag());
+        Fill("lambda_mass_acce_lpn_fake",lv_lambda_mc.M());
+        Fill("proton_mass_acce_lpn_fake",lv_proton_mc.M());
+        Fill("neutron_mass_acce_lpn_fake",lv_neutron_mc.M());
+        Fill("lp_mass_acce_lpn_fake",(lv_lambda_mc+lv_proton_mc).M());
+        Fill("lp_momtrans_acce_lpn_fake",(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_acce_lpn_fake",(lv_lambda_mc+lv_neutron_mc).M());
+        Fill("ln_momtrans_acce_lpn_fake",(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_acce_lpn_fake",lv_beam_mc.Vect().CosTheta(),lv_beam_mc.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_acce_lpn_fake",lv_lambda_mc.Vect().CosTheta(),lv_lambda_mc.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_acce_lpn_fake",lv_proton_mc.Vect().CosTheta(),lv_proton_mc.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_acce_lpn_fake",lv_neutron_mc.Vect().CosTheta(),lv_neutron_mc.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_acce_lpn_fake",lv_pi_from_lambda_mc.Vect().CosTheta(),lv_pi_from_lambda_mc.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_acce_lpn_fake",lv_nucleon_from_lambda_mc.Vect().CosTheta(),lv_nucleon_from_lambda_mc.Vect().Phi());
+        Fill("beam_momentum_lab_acce_lpn_fake",lv_beam_mc.Vect().Mag());
+        Fill("lp_mass_vs_momtrans_acce_lpn_fake",(lv_lambda_mc+lv_proton_mc).M(),(lv_lambda_mc+lv_proton_mc).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_acce_lpn_fake",(lv_lambda_mc+lv_neutron_mc).M(),(lv_lambda_mc+lv_neutron_mc).Vect().Mag());
+
+        Fill("beam_momentum_lab_meas_lpn_fake",lv_beam_meas.Vect().Mag());
+        Fill("lambda_momentum_lab_meas_lpn_fake",lv_lambda_meas.Vect().Mag());
+        Fill("proton_momentum_lab_meas_lpn_fake",lv_proton_meas.Vect().Mag());
+        Fill("neutron_momentum_lab_meas_lpn_fake",lv_missing_neutron_meas.Vect().Mag());
+        Fill("pi_from_lambda_momentum_lab_meas_lpn_fake",lv_pi_from_lambda_meas.Vect().Mag());
+        Fill("nucleon_from_lambda_momentum_lab_meas_lpn_fake",lv_nucleon_from_lambda_meas.Vect().Mag());
+        Fill("lambda_mass_meas_lpn_fake",lv_lambda_meas.M());
+        Fill("proton_mass_meas_lpn_fake",lv_proton_meas.M());
+        Fill("neutron_mass_meas_lpn_fake",lv_missing_neutron_meas.M());
+        Fill("lp_mass_meas_lpn_fake",(lv_lambda_meas+lv_proton_meas).M());
+        Fill("lp_momtrans_meas_lpn_fake",(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_meas_lpn_fake",(lv_lambda_meas+lv_missing_neutron_meas).M());
+        Fill("ln_momtrans_meas_lpn_fake",(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+
+        Fill("beam_cos_theta_vs_phi_lab_meas_lpn_fake",lv_beam_meas.Vect().CosTheta(),lv_beam_meas.Vect().Phi());
+        Fill("lambda_cos_theta_vs_phi_lab_meas_lpn_fake",lv_lambda_meas.Vect().CosTheta(),lv_lambda_meas.Vect().Phi());
+        Fill("proton_cos_theta_vs_phi_lab_meas_lpn_fake",lv_proton_meas.Vect().CosTheta(),lv_proton_meas.Vect().Phi());
+        Fill("neutron_cos_theta_vs_phi_lab_meas_lpn_fake",lv_missing_neutron_meas.Vect().CosTheta(),lv_missing_neutron_meas.Vect().Phi());
+        Fill("pi_from_lambda_cos_theta_vs_phi_lab_meas_lpn_fake",lv_pi_from_lambda_meas.Vect().CosTheta(),lv_pi_from_lambda_meas.Vect().Phi());
+        Fill("nucleon_from_lambda_cos_theta_vs_phi_lab_meas_lpn_fake",lv_nucleon_from_lambda_meas.Vect().CosTheta(),lv_nucleon_from_lambda_meas.Vect().Phi());
+        Fill("lp_mass_vs_momtrans_meas_lpn_fake",(lv_lambda_meas+lv_proton_meas).M(),(lv_lambda_meas+lv_proton_meas).Vect().Mag());
+        Fill("ln_mass_vs_momtrans_meas_lpn_fake",(lv_lambda_meas+lv_missing_neutron_meas).M(),(lv_lambda_meas+lv_missing_neutron_meas).Vect().Mag());
+    }
+
+
+    // ============================================================================================
+    // FILLING HISTOGRAMS =========================================================================
+    // ============================================================================================
+
+    return;
+}
+
+void AnalyzerLpnE15::PrintHistogram(std::string file_name){
+    if(file_name!=""){
+        _pdf_file_name = file_name;
+        _pdf_file_name = _pdf_file_name.substr(0,_pdf_file_name.find_last_of("."));
+        _pdf_file_name.append("_lpn.pdf");
+    }
+    TCanvas* tmp_canvas = new TCanvas("tmp_canvas","canvas",3200,1800);
+    tmp_canvas->Print(std::string(_pdf_file_name+"[").data());
+
+
+    std::string  meas_type[15] = {"gene","acce_lp","meas_lp","acce_ln","meas_ln","acce_ln_true","meas_ln_true","acce_ln_fake","meas_ln_fake","acce_lpn","meas_lpn","acce_lpn_true","meas_lpn_true","acce_lpn_fake","meas_lpn_fake"};
+
+    // 1D histograms to be drawn
+    for(int i_meas = 0; i_meas<15; i_meas++){
+        // --
+        _print_th1_names.push_back("beam_momentum_lab_"+meas_type[i_meas]);
+        _print_th1_names.push_back("lambda_momentum_lab_"+meas_type[i_meas]);
+        _print_th1_names.push_back("proton_momentum_lab_"+meas_type[i_meas]);
+        _print_th1_names.push_back("neutron_momentum_lab_"+meas_type[i_meas]);
+        _print_th1_names.push_back("pi_from_lambda_momentum_lab_"+meas_type[i_meas]);
+        _print_th1_names.push_back("nucleon_from_lambda_momentum_lab_"+meas_type[i_meas]);
+        // --
+        _print_th1_names.push_back("lambda_mass_"+meas_type[i_meas]);
+        _print_th1_names.push_back("proton_mass_"+meas_type[i_meas]);
+        _print_th1_names.push_back("neutron_mass_"+meas_type[i_meas]);
+        _print_th1_names.push_back("");
+        _print_th1_names.push_back("");
+        _print_th1_names.push_back("");
+        // --
+        _print_th1_names.push_back("lp_mass_"+meas_type[i_meas]);
+        _print_th1_names.push_back("lp_momtrans_"+meas_type[i_meas]);
+        _print_th1_names.push_back("");
+        _print_th1_names.push_back("ln_mass_"+meas_type[i_meas]);
+        _print_th1_names.push_back("ln_momtrans_"+meas_type[i_meas]);
+        _print_th1_names.push_back("");
+        // --
+    }
+    // --
+    // 1D histograms drawn logarithmic
+    // --
+    //_log_th1_names.push_back("");
+    // --
+
+
+    // 2D histograms to be drawn
+    for(int i_meas = 0; i_meas<15; i_meas++){
+        // --
+        _print_th2_names.push_back("beam_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        _print_th2_names.push_back("lambda_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        _print_th2_names.push_back("proton_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        _print_th2_names.push_back("neutron_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        _print_th2_names.push_back("pi_from_lambda_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        _print_th2_names.push_back("nucleon_from_lambda_cos_theta_vs_phi_lab_"+meas_type[i_meas]);
+        // --
+        _print_th2_names.push_back("lp_mass_vs_momtrans_"+meas_type[i_meas]);
+        _print_th2_names.push_back("ln_mass_vs_momtrans_"+meas_type[i_meas]);
+        _print_th2_names.push_back("");
+        _print_th2_names.push_back("");
+        _print_th2_names.push_back("");
+        _print_th2_names.push_back("");
+        // --
+    }
+    // --
+    _print_th2_names.push_back("neutral_over_beta_vs_energy_deposit_meas");
+    _print_th2_names.push_back("");
+    _print_th2_names.push_back("");
+    _print_th2_names.push_back("");
+    _print_th2_names.push_back("");
+    _print_th2_names.push_back("");
+    // --
+    // 2D histograms drawn logarithmic
+    // --
+    _log_th2_names.push_back("neutral_over_beta_vs_energy_deposit_meas");
+    // --
+
+    Print();
+
+    // For same drawing TH1
+    std::vector<std::string> th1_names;
+    std::vector<Int_t> line_colors;
+    std::vector<std::string> legend_names;
+    th1_names.push_back("proton_mass_meas_ln");
+    line_colors.push_back(kBlack);
+    legend_names.push_back("all");
+    th1_names.push_back("proton_mass_meas_ln_fake");
+    line_colors.push_back(kBlue-4);
+    legend_names.push_back("fake");
+    Print1D(th1_names,line_colors,legend_names);
+
+
+    // For acceptance
+    // On the 2D plot of Lp system
+    std::string gene_name = "lp_mass_vs_momtrans_gene";
+    std::vector<std::string> acce_names;
+    acce_names.push_back("lp_mass_vs_momtrans_acce_lp");
+    acce_names.push_back("lp_mass_vs_momtrans_acce_ln");
+    acce_names.push_back("lp_mass_vs_momtrans_acce_lpn");
+    PrintAcceptance(gene_name,acce_names);
+    // On the 2D plot of Ln system
+    gene_name = "ln_mass_vs_momtrans_gene";
+    acce_names.clear();
+    acce_names.push_back("ln_mass_vs_momtrans_acce_lp");
+    acce_names.push_back("ln_mass_vs_momtrans_acce_ln");
+    acce_names.push_back("ln_mass_vs_momtrans_acce_lpn");
+    PrintAcceptance(gene_name,acce_names);
+
+    tmp_canvas->Print(std::string(_pdf_file_name+"]").data());
+    delete tmp_canvas;
+
+}

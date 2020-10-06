@@ -1,0 +1,40 @@
+// AnalyzerLpnE15.hh
+
+#ifndef AnalyzerLpnE15_hh
+#define AnalyzerLpnE15_hh
+
+#include "KnuclRootData.h"
+#include "KnuclCommon.h"
+
+#include "Analyzer.hh"
+#include "AnalyzedDataE15.hh"
+#include "AnaKnuclCommon.h"
+
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TString.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TMath.h"
+#include "TColor.h"
+#include "TRandom3.h"
+
+class AnalyzerLpnE15 : public Analyzer
+{
+    public:
+        AnalyzerLpnE15();
+        AnalyzerLpnE15(std::string file_name,std::string option="");
+        ~AnalyzerLpnE15();
+
+        void DoAnalysis(MCData* mcData, DetectorData* detectorData, AnalyzedDataE15*);
+        void PrintHistogram(std::string file_name="");
+
+    private:
+        void CreateRootFile(std::string option="");
+
+};
+
+#endif
+
