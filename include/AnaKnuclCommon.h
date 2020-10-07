@@ -22,6 +22,11 @@ const Double_t kKaon0Mass = 0.497614;
 const Double_t kThreeHeMass = 2.80839;
 const Double_t kLightVelocity = 29.97; // cm/ns
 
+const Double_t kRadialResolutionOfCDC = 200.e-6; // m (200 um)
+const Double_t kZResolutionOfCDC = 2.e-3; // m (2 mm)
+const Double_t kMagneticField = 0.7; // T
+const Double_t kRadiationLengthOfChamberGas = 500.; // m
+
 const Double_t kAnalysisEfficiency = 0.5;
 const Double_t kSelectionEfficiency = 0.8;
 
@@ -37,4 +42,25 @@ const Int_t kLineColor[10] = {
     kBlack,
     kBlack
 };
+
+const Double_t kCDCLayerRadius[15] = { // cm
+    19.05,
+    20.40,
+    21.75,
+    24.85,
+    26.20,
+    29.30,
+    30.65,
+    33.75,
+    35.10,
+    38.20,
+    39.55,
+    42.65,
+    44.00,
+    47.10,
+    48.45
+};
+
+
+
 #endif

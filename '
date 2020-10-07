@@ -416,16 +416,20 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         bool is_tracked_by_chamber = false;
         Int_t number_of_hit_in_chamber = 0;
         bool is_detected_by_hodoscope = false;
+        TVector3 position_at_first_hit_layer(0.,0.,0.);
         Int_t first_hit_layer = 99;
+        TVector3 position_at_last_hit_layer(0.,0.,0.);
         Int_t last_hit_layer = -99;
         for(Int_t i_hit=0; i_hit<track->detectorHitLinkSize(); i_hit++){
             DetectorHit* hit = detectorData->detectorHit(track->detectorHitLink(i_hit));
             if(hit->detectorID()==CID_CDC){
-                if(hit->layerID()<first_hit_layer){
+                if(hit->layerID()!=0&&hit->layerID()<first_hit_layer){
                     first_hit_layer = hit->layerID();
+                    position_at_first_hit_layer = hit->pos()*0.001; // m
                 }
-                if(hit->layerID()>last_hit_layer){
-                    last_hit_layer = hit->layerID();
+                    if(hit->layerID()!=0&&hit->layerID()>last_hit_layer){
+                        last_hit_layer = hit->layerID();
+                    position_at_last_hit_layer = hit->pos()*0.001; // m
                 }
                 number_of_hit_in_chamber++;
             }
@@ -453,8 +457,10 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                         beta = vec_momentum.Mag() / sqrt(vec_momentum.Mag2()+mass*mass);
                     }
 
-                    Double_t lever_arm_length = fabs(kCDCLayerRadius[last_hit_layer]-kCDCLayerRadius[first_hit_layer])*0.01; // m
-                    Double_t arm_length = lever_arm_length / sin(vec_momentum.Theta());
+                    Double_t r_at_first_hit_layer = sqrt( pow(position_at_first_hit_layer.X(),2.) + pow(position_at_first_hit_layer.Y(),2.) );
+                    Double_t r_at_last_hit_layer = sqrt( pow(position_at_last_hit_layer.X(),2.) + pow(position_at_last_hit_layer.Y(),2.) );
+                    Double_t lever_arm_length = fabs(r_at_last_hit_layer-r_at_first_hit_layer);
+                    Double_t arm_length = (position_at_last_hit_layer-position_at_first_hit_layer).Mag();
 
                     Double_t transverse_momentum_resolution_meas_error = transverse_momentum * kRadialResolutionOfCDC / (0.3*pow(lever_arm_length,2.)*kMagneticField) * sqrt(720./(Double_t)(number_of_hit_in_chamber+5));
                     Double_t transverse_momentum_resolution_mult_scat = 0.05 / (beta*kMagneticField) * sqrt( 1.43/(lever_arm_length*kRadiationLengthOfChamberGas) );
