@@ -3,6 +3,8 @@
 #ifndef Analyzer_hh
 #define Analyzer_hh
 
+#include <iomanip>
+
 #include "KnuclRootData.h"
 #include "KnuclCommon.h"
 
@@ -20,6 +22,12 @@
 #include "TColor.h"
 #include "TRandom3.h"
 #include "TLegend.h"
+#include "TLatex.h"
+#include "TLine.h"
+#include "TProfile.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TF1.h"
 
 class Analyzer
 {
@@ -38,6 +46,7 @@ class Analyzer
         void Print(std::vector<std::string>,std::vector<std::string>,const Int_t);
         void PrintSame(std::vector<std::string>,std::vector<Int_t>,std::vector<std::string>);
         void PrintAcceptance(std::vector<std::string> gene_names, std::vector<std::string> acce_names, Double_t maximum);
+        void Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice);
         void SetHistogram(TH1*);
 
     protected:

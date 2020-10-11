@@ -6,6 +6,11 @@
 #include "KnuclRootData.h"
 #include "KnuclCommon.h"
 
+#include "KinFitter/TKinFitter.h"
+#include "KinFitter/TFitParticlePxPyPz.h"
+#include "KinFitter/TFitConstraintM.h"
+#include "KinFitter/TFitConstraintEp.h"
+
 #include "Analyzer.hh"
 #include "AnalyzedData.hh"
 #include "AnaKnuclCommon.h"

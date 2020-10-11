@@ -113,29 +113,6 @@ class AnalyzedData
     private:
         TVector3 _vec_reaction_vertex;
 
-    private:
-        static const Double_t _kVertexResolutionOfBeamXY;
-        static const Double_t _kVertexResolutionOfBeamZ;
-        static const Int_t _kNumberOfChamberHitsInBeamAtLeast;
-        static const Double_t _kBeamMomentumResolution;
-        static const Double_t _kBeamThetaResolution;
-        static const Int_t _kNumberOfChamberHitsInCDCAtLeast;
-        static const Double_t _kMomentumResolutionOfCDC_Momentum;
-        static const Double_t _kMomentumResolutionOfCDC_OverBeta;
-        static const Double_t _kZResolutionOfCDC;
-        static const Double_t _kArmLengthOfCDC;
-        static const Int_t _kNumberOfChamberHitsInCAPAtLeast;
-        static const Double_t _kMomentumResolutionOfCAP_Momentum;
-        static const Double_t _kMomentumResolutionOfCAP_OverBeta;
-        static const Double_t _kZResolutionOfCAP;
-        static const Double_t _kArmLengthOfCAP;
-        static const Double_t _kTOFResolutionOfNC;
-        static const Double_t _kZPositionResolutionOfNC;
-        static const Double_t _kRPositionResolutionOfNC;
-        static const Double_t _kNeutralMomentumAtLeast;
-        static const Double_t _kNeutralEnergyDepositAtLeast;
-        static const Double_t _kNeutralOverBetaAtLeast;
-
 };
 
 #endif

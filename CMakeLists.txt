@@ -26,6 +26,12 @@ find_package(ROOT)
 include_directories(${ROOT_INCLUDE_DIR})
 #
 #----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
+# include KinFittrer
+#
+include_directories($ENV{KFSRCDIR})
+#
+#----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 #
@@ -35,9 +41,9 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(ana_knucl ana_knucl.cc ${sources} ${headers})
-target_link_libraries(ana_knucl ${ROOT_LIBRARIES} $ENV{KNUCLSRCDIR}/build/libKnuclROOT.so -lEG)
+target_link_libraries(ana_knucl ${ROOT_LIBRARIES} $ENV{KNUCLSRCDIR}/build/libKnuclROOT.so $ENV{KFLIBDIR}/libTKinFitter.so -lEG)
 #add_executable(ana_knucl_e15 ana_knucl_e15.cc ${sources} ${headers})
 #target_link_libraries(ana_knucl_e15 ${ROOT_LIBRARIES} $ENV{KNUCLSRCDIR}/build/libKnuclROOT.so -lEG)
 add_executable(plot_knucl plot_knucl.cc ${sources} ${headers})
-target_link_libraries(plot_knucl ${ROOT_LIBRARIES} $ENV{KNUCLSRCDIR}/build/libKnuclROOT.so -lEG -lHistPainter)
+target_link_libraries(plot_knucl ${ROOT_LIBRARIES} $ENV{KNUCLSRCDIR}/build/libKnuclROOT.so $ENV{KFLIBDIR}/libTKinFitter.so -lEG -lHistPainter)
 set(CMAKE_MACOSX_RPATH 1)

@@ -2,44 +2,25 @@
 
 #include"AnalyzedData.hh"
 
-const Double_t AnalyzedData::_kVertexResolutionOfBeamXY         = 1.0; // mm
-const Double_t AnalyzedData::_kVertexResolutionOfBeamZ          = 10.0; // mm
-const Int_t AnalyzedData::_kNumberOfChamberHitsInBeamAtLeast    = 8; // # of total layres :: 8+8+8 = 24
-const Double_t AnalyzedData::_kBeamMomentumResolution           = 0.2; // %
-const Double_t AnalyzedData::_kBeamThetaResolution              = 0.01;
-const Int_t AnalyzedData::_kNumberOfChamberHitsInCDCAtLeast     = 15; // total layres :: 15
-const Double_t AnalyzedData::_kMomentumResolutionOfCDC_Momentum = 8.4; // %
-const Double_t AnalyzedData::_kMomentumResolutionOfCDC_OverBeta = 1.1; // %
-const Double_t AnalyzedData::_kZResolutionOfCDC                 = 1.0; // cm
-const Double_t AnalyzedData::_kArmLengthOfCDC                   = 30.0; // cm
-const Int_t AnalyzedData::_kNumberOfChamberHitsInCAPAtLeast     = 24; // total layres :: 8+8+8 = 24
-const Double_t AnalyzedData::_kMomentumResolutionOfCAP_Momentum = 8.4; // %
-const Double_t AnalyzedData::_kMomentumResolutionOfCAP_OverBeta = 1.1; // %
-const Double_t AnalyzedData::_kZResolutionOfCAP                 = 0.1; // cm
-const Double_t AnalyzedData::_kArmLengthOfCAP                   = 80.0; // cm
-const Double_t AnalyzedData::_kTOFResolutionOfNC                = 0.12; // ns
-const Double_t AnalyzedData::_kZPositionResolutionOfNC          = 5.0; // cm
-const Double_t AnalyzedData::_kRPositionResolutionOfNC          = 5.0; // cm
-const Double_t AnalyzedData::_kNeutralMomentumAtLeast           =10.0; // MeV/c
-const Double_t AnalyzedData::_kNeutralEnergyDepositAtLeast      = 5.0; // MeVee
-const Double_t AnalyzedData::_kNeutralOverBetaAtLeast           = 1.2; 
-
 AnalyzedData::AnalyzedData()
 {
     random = new TRandom3(0); // 0 means generating a random seed
 
-    pdg = new TDatabasePDG();
-    const char* tmp_root_sys = "/sw/packages/root/5.34.38";
-    const char* env_root_sys = std::getenv("ROOTSYS");
-    std::string pdg_file_name;
-    if(env_root_sys != 0){
-        pdg_file_name = env_root_sys;
+    pdg = TDatabasePDG::Instance();
+    if(!pdg){
+        pdg = new TDatabasePDG();
+        const char* tmp_root_sys = "/sw/packages/root/5.34.38";
+        const char* env_root_sys = std::getenv("ROOTSYS");
+        std::string pdg_file_name;
+        if(env_root_sys != 0){
+            pdg_file_name = env_root_sys;
+        }
+        else{
+            pdg_file_name = tmp_root_sys;
+        }
+        pdg_file_name += "/etc/pdg_table.txt";
+        pdg->ReadPDGTable(pdg_file_name.data());
     }
-    else{
-        pdg_file_name = tmp_root_sys;
-    }
-    pdg_file_name += "/etc/pdg_table.txt";
-    pdg->ReadPDGTable(pdg_file_name.data());
 
     Clear();
 }
@@ -47,8 +28,8 @@ AnalyzedData::AnalyzedData()
 AnalyzedData::~AnalyzedData()
 {
     Clear();
-    delete random;
-    delete pdg;
+    if(random) delete random;
+    if(pdg) delete pdg;
 }
 
 void AnalyzedData::Clear()
@@ -198,8 +179,8 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             vec_original_reaction_vertex = track->vertex()*0.1; // cm
         }
     }
-    Double_t sigma_reaction_vertex_xy = _kVertexResolutionOfBeamXY;
-    Double_t sigma_reaction_vertex_z  = _kVertexResolutionOfBeamZ;
+    Double_t sigma_reaction_vertex_xy = kVertexResolutionOfBeamXY;
+    Double_t sigma_reaction_vertex_z  = kVertexResolutionOfBeamZ;
     Double_t reaction_vertex_x = vec_original_reaction_vertex.X();
     Double_t reaction_vertex_y = vec_original_reaction_vertex.Y();
     Double_t reaction_vertex_z = vec_original_reaction_vertex.Z();
@@ -349,7 +330,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                 number_of_hit_in_chamber++;
             }
         }
-        if(number_of_hit_in_chamber>=_kNumberOfChamberHitsInBeamAtLeast){
+        if(number_of_hit_in_chamber>=kNumberOfChamberHitsInBeamAtLeast){
             is_tracked_by_chamber = true;
         }
         is_detected_by_hodoscope = is_detected_by_t0 & is_detected_by_def;
@@ -361,10 +342,10 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                     track->setPdgID(-321); // K-
                     TVector3 vec_momentum = -track_from_mcdata->momentum()*0.001; // GeV/c
                     double momentum = vec_momentum.Mag();
-                    double sigma_momentum = momentum * _kBeamMomentumResolution*0.01; // %
+                    double sigma_momentum = momentum * kBeamMomentumResolution*0.01; // %
                     momentum = random->Gaus(momentum,sigma_momentum);
                     double theta = vec_momentum.Theta();
-                    double sigma_theta = pow(sin(theta),2.)*_kBeamThetaResolution;
+                    double sigma_theta = pow(sin(theta),2.)*kBeamThetaResolution;
                     theta = random->Gaus(theta,sigma_theta);
                     vec_momentum.SetMag(momentum);
                     vec_momentum.SetTheta(theta);
@@ -418,6 +399,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         bool is_detected_by_hodoscope = false;
         Int_t first_hit_layer = 99;
         Int_t last_hit_layer = -99;
+        bool is_layer_fired[15] = {false};
         for(Int_t i_hit=0; i_hit<track->detectorHitLinkSize(); i_hit++){
             DetectorHit* hit = detectorData->detectorHit(track->detectorHitLink(i_hit));
             if(hit->detectorID()==CID_CDC){
@@ -427,13 +409,16 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                 if(hit->layerID()>last_hit_layer){
                     last_hit_layer = hit->layerID();
                 }
-                number_of_hit_in_chamber++;
+                if(!is_layer_fired[hit->layerID()]){
+                    is_layer_fired[hit->layerID()] = true;
+                    number_of_hit_in_chamber++;
+                }
             }
             else if(hit->detectorID()==CID_CHCbarrel){
                 is_detected_by_hodoscope = true;
             }
         }
-        if(number_of_hit_in_chamber>=_kNumberOfChamberHitsInCDCAtLeast){
+        if(number_of_hit_in_chamber>=kNumberOfChamberHitsInCDCAtLeast){
             is_tracked_by_chamber = true;
         }
 
@@ -493,10 +478,10 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
     // --------------------------------------------------------------------------------------------
     // charged particles (capb)  --------------------------------------------------------------------
     // --------------------------------------------------------------------------------------------
-    // BDC1 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _bdc1_hits[i_layer].begin();
-        itr_hits_end = _bdc1_hits[i_layer].end();
+    // CDC ----------------------------------------------------------------------------------------
+    for(int i_layer=0; i_layer<15; i_layer++){
+        itr_hits_begin = _cdc_hits[i_layer].begin();
+        itr_hits_end = _cdc_hits[i_layer].end();
         for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
             DetectorHit* hit = *itr_hit;
             if(!CheckTrackAlreadyMeasured(_measured_charged_capb_tracks,hit)){
@@ -504,27 +489,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             }
         }
     }
-    // BDC1 ---------------------------------------------------------------------------------------
-    // BDC2 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _bdc2_hits[i_layer].begin();
-        itr_hits_end = _bdc2_hits[i_layer].end();
-        for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
-            DetectorHit* hit = *itr_hit;
-            CheckTrackAlreadyMeasured(_measured_charged_capb_tracks,hit);
-        }
-    }
-    // BDC2 ---------------------------------------------------------------------------------------
-    // BDC3 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _bdc3_hits[i_layer].begin();
-        itr_hits_end = _bdc3_hits[i_layer].end();
-        for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
-            DetectorHit* hit = *itr_hit;
-            CheckTrackAlreadyMeasured(_measured_charged_capb_tracks,hit);
-        }
-    }
-    // BDC2 ---------------------------------------------------------------------------------------
+    // CDC ----------------------------------------------------------------------------------------
     // CHCCapB ------------------------------------------------------------------------------------
     itr_hits_begin = _chccapb_hits.begin();
     itr_hits_end = _chccapb_hits.end();
@@ -539,16 +504,28 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         bool is_tracked_by_chamber = false;
         Int_t number_of_hit_in_chamber = 0;
         bool is_detected_by_hodoscope = false;
+        Int_t first_hit_layer = 99;
+        Int_t last_hit_layer = -99;
+        bool is_layer_fired[15] = {false};
         for(Int_t i_hit=0; i_hit<track->detectorHitLinkSize(); i_hit++){
             DetectorHit* hit = detectorData->detectorHit(track->detectorHitLink(i_hit));
-            if(hit->detectorID()==CID_BDC1||hit->detectorID()==CID_BDC2||hit->detectorID()==CID_BDC3){
-                number_of_hit_in_chamber++;
+            if(hit->detectorID()==CID_CDC){
+                if(hit->layerID()<first_hit_layer){
+                    first_hit_layer = hit->layerID();
+                }
+                if(hit->layerID()>last_hit_layer){
+                    last_hit_layer = hit->layerID();
+                }
+                if(!is_layer_fired[hit->layerID()]){
+                    is_layer_fired[hit->layerID()] = true;
+                    number_of_hit_in_chamber++;
+                }
             }
             else if(hit->detectorID()==CID_CHCcapB){
                 is_detected_by_hodoscope = true;
             }
         }
-        if(number_of_hit_in_chamber>=_kNumberOfChamberHitsInCAPAtLeast){
+        if(number_of_hit_in_chamber>=kNumberOfChamberHitsInCAPAtLeast){
             is_tracked_by_chamber = true;
         }
 
@@ -558,27 +535,38 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                 if(track_from_mcdata->trackID()==track->trackID()){
                     track->setPdgID(track_from_mcdata->pdgID());
                     TVector3 vec_momentum = track_from_mcdata->momentum()*0.001; // GeV/c
-                    double transverse_momentum = vec_momentum.Perp();
+
+                    // transverse momentum
+                    Double_t transverse_momentum = vec_momentum.Perp();
+                    Double_t beta = 0.;
                     TParticlePDG* particle = pdg->GetParticle(track->pdgID());
                     if(particle){
-                        double mass = pdg->GetParticle(track->pdgID())->Mass();
-                        double over_beta = vec_momentum.Mag() / sqrt(vec_momentum.Mag2()+mass*mass);
-                        double sigma_transverse_momentum = pow(transverse_momentum*_kMomentumResolutionOfCAP_Momentum*0.01,2.)
-                            + pow(over_beta*_kMomentumResolutionOfCAP_OverBeta*0.01,2.);
-                        sigma_transverse_momentum = transverse_momentum * sqrt(sigma_transverse_momentum);
-                        transverse_momentum = random->Gaus(transverse_momentum,sigma_transverse_momentum);
+                        Double_t mass = particle->Mass();
+                        beta = vec_momentum.Mag() / sqrt(vec_momentum.Mag2()+mass*mass);
                     }
-                    else{
-                        double sigma_transverse_momentum = transverse_momentum*_kMomentumResolutionOfCAP_Momentum*0.01;
-                        sigma_transverse_momentum = transverse_momentum * sigma_transverse_momentum;
-                        transverse_momentum = random->Gaus(transverse_momentum,sigma_transverse_momentum);
-                    }
-                    double theta = vec_momentum.Theta();
-                    double sigma_theta = pow(sin(theta),2.)*(_kZResolutionOfCAP/_kArmLengthOfCAP);
-                    theta = random->Gaus(theta,sigma_theta);
-                    vec_momentum.SetMag(transverse_momentum/sin(theta));
-                    vec_momentum.SetTheta(theta);
-                    track->setMomentum(vec_momentum);
+
+                    Double_t lever_arm_length = fabs(kCDCLayerRadius[last_hit_layer]-kCDCLayerRadius[first_hit_layer])*0.01; // m
+                    Double_t arm_length = lever_arm_length / sin(vec_momentum.Theta());
+
+                    Double_t transverse_momentum_resolution_meas_error = transverse_momentum * kRadialResolutionOfCDC / (0.3*pow(lever_arm_length,2.)*kMagneticField) * sqrt(720./(Double_t)(number_of_hit_in_chamber+5));
+                    Double_t transverse_momentum_resolution_mult_scat = 0.05 / (beta*kMagneticField) * sqrt( 1.43/(lever_arm_length*kRadiationLengthOfChamberGas) );
+                    Double_t transverse_momentum_resolution = transverse_momentum * sqrt( pow(transverse_momentum_resolution_meas_error,2.) + pow(transverse_momentum_resolution_mult_scat,2.) );
+                    Double_t transverse_momentum_smeared = random->Gaus(transverse_momentum,transverse_momentum_resolution);
+
+                    // theta
+                    Double_t theta = vec_momentum.Theta();
+                    Double_t momentum = vec_momentum.Mag();
+
+                    Double_t theta_resolution_meas_error = pow(sin(theta),2.) / arm_length * kZResolutionOfCDC;
+                    Double_t theta_resolution_mult_scat = 0.015 / (momentum*beta) * sqrt(arm_length/kRadiationLengthOfChamberGas);
+                    Double_t theta_resolution = sqrt( pow(theta_resolution_meas_error,2.) + pow(theta_resolution_mult_scat,2.) );
+                    Double_t theta_smeared = random->Gaus(theta,theta_resolution);
+
+                    // set smeared momentum
+                    TVector3 vec_momentum_smeared = vec_momentum;
+                    vec_momentum_smeared.SetMag(transverse_momentum_smeared/sin(theta_smeared));
+                    vec_momentum_smeared.SetTheta(theta_smeared);
+                    track->setMomentum(vec_momentum_smeared);
                     break;
                 }
             }
@@ -597,10 +585,10 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
     // --------------------------------------------------------------------------------------------
     // charged particles (capf)  --------------------------------------------------------------------
     // --------------------------------------------------------------------------------------------
-    // FDC1 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _fdc1_hits[i_layer].begin();
-        itr_hits_end = _fdc1_hits[i_layer].end();
+    // CDC ----------------------------------------------------------------------------------------
+    for(int i_layer=0; i_layer<15; i_layer++){
+        itr_hits_begin = _cdc_hits[i_layer].begin();
+        itr_hits_end = _cdc_hits[i_layer].end();
         for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
             DetectorHit* hit = *itr_hit;
             if(!CheckTrackAlreadyMeasured(_measured_charged_capf_tracks,hit)){
@@ -608,27 +596,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             }
         }
     }
-    // FDC1 ---------------------------------------------------------------------------------------
-    // FDC2 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _fdc2_hits[i_layer].begin();
-        itr_hits_end = _fdc2_hits[i_layer].end();
-        for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
-            DetectorHit* hit = *itr_hit;
-            CheckTrackAlreadyMeasured(_measured_charged_capf_tracks,hit);
-        }
-    }
-    // FDC2 ---------------------------------------------------------------------------------------
-    // FDC3 ---------------------------------------------------------------------------------------
-    for(int i_layer=0; i_layer<8; i_layer++){
-        itr_hits_begin = _fdc3_hits[i_layer].begin();
-        itr_hits_end = _fdc3_hits[i_layer].end();
-        for(std::vector<DetectorHit*>::iterator itr_hit=itr_hits_begin; itr_hit!=itr_hits_end; ++itr_hit){
-            DetectorHit* hit = *itr_hit;
-            CheckTrackAlreadyMeasured(_measured_charged_capf_tracks,hit);
-        }
-    }
-    // BDC2 ---------------------------------------------------------------------------------------
+    // CDC ----------------------------------------------------------------------------------------
     // CHCCapF ------------------------------------------------------------------------------------
     itr_hits_begin = _chccapf_hits.begin();
     itr_hits_end = _chccapf_hits.end();
@@ -643,16 +611,28 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         bool is_tracked_by_chamber = false;
         Int_t number_of_hit_in_chamber = 0;
         bool is_detected_by_hodoscope = false;
+        Int_t first_hit_layer = 99;
+        Int_t last_hit_layer = -99;
+        bool is_layer_fired[15] = {false};
         for(Int_t i_hit=0; i_hit<track->detectorHitLinkSize(); i_hit++){
             DetectorHit* hit = detectorData->detectorHit(track->detectorHitLink(i_hit));
-            if(hit->detectorID()==CID_FDC1||hit->detectorID()==CID_FDC2||hit->detectorID()==CID_FDC3){
-                number_of_hit_in_chamber++;
+            if(hit->detectorID()==CID_CDC){
+                if(hit->layerID()<first_hit_layer){
+                    first_hit_layer = hit->layerID();
+                }
+                if(hit->layerID()>last_hit_layer){
+                    last_hit_layer = hit->layerID();
+                }
+                if(!is_layer_fired[hit->layerID()]){
+                    is_layer_fired[hit->layerID()] = true;
+                    number_of_hit_in_chamber++;
+                }
             }
             else if(hit->detectorID()==CID_CHCcapF){
                 is_detected_by_hodoscope = true;
             }
         }
-        if(number_of_hit_in_chamber>=_kNumberOfChamberHitsInCAPAtLeast){
+        if(number_of_hit_in_chamber>=kNumberOfChamberHitsInCAPAtLeast){
             is_tracked_by_chamber = true;
         }
 
@@ -662,27 +642,44 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
                 if(track_from_mcdata->trackID()==track->trackID()){
                     track->setPdgID(track_from_mcdata->pdgID());
                     TVector3 vec_momentum = track_from_mcdata->momentum()*0.001; // GeV/c
-                    double transverse_momentum = vec_momentum.Perp();
+
+                    // transverse momentum
+                    Double_t transverse_momentum = vec_momentum.Perp();
+                    Double_t beta = 0.;
                     TParticlePDG* particle = pdg->GetParticle(track->pdgID());
                     if(particle){
-                        double mass = pdg->GetParticle(track->pdgID())->Mass();
-                        double over_beta = vec_momentum.Mag() / sqrt(vec_momentum.Mag2()+mass*mass);
-                        double sigma_transverse_momentum = pow(transverse_momentum*_kMomentumResolutionOfCAP_Momentum*0.01,2.)
-                            + pow(over_beta*_kMomentumResolutionOfCAP_OverBeta*0.01,2.);
-                        sigma_transverse_momentum = transverse_momentum * sqrt(sigma_transverse_momentum);
-                        transverse_momentum = random->Gaus(transverse_momentum,sigma_transverse_momentum);
+                        Double_t mass = particle->Mass();
+                        beta = vec_momentum.Mag() / sqrt(vec_momentum.Mag2()+mass*mass);
                     }
-                    else{
-                        double sigma_transverse_momentum = transverse_momentum*_kMomentumResolutionOfCAP_Momentum*0.01;
-                        sigma_transverse_momentum = transverse_momentum * sigma_transverse_momentum;
-                        transverse_momentum = random->Gaus(transverse_momentum,sigma_transverse_momentum);
-                    }
-                    double theta = vec_momentum.Theta();
-                    double sigma_theta = pow(sin(theta),2.)*(_kZResolutionOfCAP/_kArmLengthOfCAP);
-                    theta = random->Gaus(theta,sigma_theta);
-                    vec_momentum.SetMag(transverse_momentum/sin(theta));
-                    vec_momentum.SetTheta(theta);
-                    track->setMomentum(vec_momentum);
+
+                    Double_t lever_arm_length = fabs(kCDCLayerRadius[last_hit_layer]-kCDCLayerRadius[first_hit_layer])*0.01; // m
+                    Double_t arm_length = lever_arm_length / sin(vec_momentum.Theta());
+
+                    Double_t transverse_momentum_resolution_meas_error = transverse_momentum * kRadialResolutionOfCDC / (0.3*pow(lever_arm_length,2.)*kMagneticField) * sqrt(720./(Double_t)(number_of_hit_in_chamber+5));
+                    Double_t transverse_momentum_resolution_mult_scat = 0.05 / (beta*kMagneticField) * sqrt( 1.43/(lever_arm_length*kRadiationLengthOfChamberGas) );
+                    Double_t transverse_momentum_resolution = transverse_momentum * sqrt( pow(transverse_momentum_resolution_meas_error,2.) + pow(transverse_momentum_resolution_mult_scat,2.) );
+                    Double_t transverse_momentum_smeared = random->Gaus(transverse_momentum,transverse_momentum_resolution);
+
+                    //std::cout << "------" << std::endl;
+                    //std::cout << "L : " << lever_arm_length << std::endl;
+                    //std::cout << "L_arm : " << arm_length << std::endl;
+                    //std::cout << "pt_meas / pt : " << transverse_momentum_resolution_meas_error/transverse_momentum << std::endl;
+                    //std::cout << "pt_ms * beta : " << transverse_momentum_resolution_mult_scat*beta << std::endl;
+
+                    // theta
+                    Double_t theta = vec_momentum.Theta();
+                    Double_t momentum = vec_momentum.Mag();
+
+                    Double_t theta_resolution_meas_error = pow(sin(theta),2.) / arm_length * kZResolutionOfCDC;
+                    Double_t theta_resolution_mult_scat = 0.015 / (momentum*beta) * sqrt(arm_length/kRadiationLengthOfChamberGas);
+                    Double_t theta_resolution = sqrt( pow(theta_resolution_meas_error,2.) + pow(theta_resolution_mult_scat,2.) );
+                    Double_t theta_smeared = random->Gaus(theta,theta_resolution);
+
+                    // set smeared momentum
+                    TVector3 vec_momentum_smeared = vec_momentum;
+                    vec_momentum_smeared.SetMag(transverse_momentum_smeared/sin(theta_smeared));
+                    vec_momentum_smeared.SetTheta(theta_smeared);
+                    track->setMomentum(vec_momentum_smeared);
                     break;
                 }
             }
@@ -750,10 +747,10 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         if(!is_detected_by_veto&&is_detected_by_hodoscope){
             double energy_deposit = nc_hit->de(); // MeVee
             double time = nc_hit->time(); // ns
-            double sigma_time = _kTOFResolutionOfNC; // ns
+            double sigma_time = kTOFResolutionOfNC; // ns
             time = random->Gaus(time,sigma_time);
             TVector3 vec_position = nc_hit->pos()*0.1; // cm
-            double sigma_z_position = _kZPositionResolutionOfNC; // cm
+            double sigma_z_position = kZPositionResolutionOfNC; // cm
             vec_position.SetZ(random->Gaus(vec_position.Z(),sigma_z_position));
             TVector3 vec_momentum = vec_position - _vec_reaction_vertex;
             double over_beta = (time * kLightVelocity) / vec_momentum.Mag();
@@ -762,7 +759,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             track->setPdgID(2112);
             track->setMomentum(vec_momentum);
 
-            if(momentum>_kNeutralMomentumAtLeast/1000.&&energy_deposit>_kNeutralEnergyDepositAtLeast&&over_beta>_kNeutralOverBetaAtLeast){
+            if(momentum>kNeutralMomentumAtLeast/1000.&&energy_deposit>kNeutralEnergyDepositAtLeast&&over_beta>kNeutralOverBetaAtLeast){
                 _measured_neutral_energy_deposits.push_back(energy_deposit);
                 _measured_neutral_over_betas.push_back(over_beta);
                 _measured_neutral_times.push_back(time);
@@ -833,11 +830,11 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         if(!is_detected_by_veto&&is_detected_by_hodoscope){
             double energy_deposit = nc_hit->de(); // MeVee
             double time = nc_hit->time(); // ns
-            double sigma_time = _kTOFResolutionOfNC; // ns
+            double sigma_time = kTOFResolutionOfNC; // ns
             time = random->Gaus(time,sigma_time);
             TVector3 vec_position = nc_hit->pos()*0.1; // cm
             double r_position = sqrt( pow(vec_position.X(),2.) + pow(vec_position.Y(),2.) );
-            double sigma_r_position = _kRPositionResolutionOfNC; // cm
+            double sigma_r_position = kRPositionResolutionOfNC; // cm
             r_position = random->Gaus(r_position,sigma_r_position); 
             double phi = vec_position.Phi();
             double x_position = r_position * cos(phi);
@@ -854,7 +851,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             _measured_neutral_capb_over_betas.push_back(over_beta);
             _measured_neutral_capb_times.push_back(time);
 
-            if(momentum>_kNeutralMomentumAtLeast/1000.&&energy_deposit>_kNeutralEnergyDepositAtLeast&&over_beta>_kNeutralOverBetaAtLeast){
+            if(momentum>kNeutralMomentumAtLeast/1000.&&energy_deposit>kNeutralEnergyDepositAtLeast&&over_beta>kNeutralOverBetaAtLeast){
                 itr_track++;
             }
             else{
@@ -922,11 +919,11 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
         if(!is_detected_by_veto&&is_detected_by_hodoscope){
             double energy_deposit = nc_hit->de(); // MeVee
             double time = nc_hit->time(); // ns
-            double sigma_time = _kTOFResolutionOfNC; // ns
+            double sigma_time = kTOFResolutionOfNC; // ns
             time = random->Gaus(time,sigma_time);
             TVector3 vec_position = nc_hit->pos()*0.1; // cm
             double r_position = sqrt( pow(vec_position.X(),2.) + pow(vec_position.Y(),2.) );
-            double sigma_r_position = _kRPositionResolutionOfNC; // cm
+            double sigma_r_position = kRPositionResolutionOfNC; // cm
             r_position = random->Gaus(r_position,sigma_r_position); 
             double phi = vec_position.Phi();
             double x_position = r_position * cos(phi);
@@ -943,7 +940,7 @@ void AnalyzedData::DoAnalysis(MCData* mcData, DetectorData* detectorData)
             _measured_neutral_capf_over_betas.push_back(over_beta);
             _measured_neutral_capf_times.push_back(time);
 
-            if(momentum>_kNeutralMomentumAtLeast/1000.&&energy_deposit>_kNeutralEnergyDepositAtLeast&&over_beta>_kNeutralOverBetaAtLeast){
+            if(momentum>kNeutralMomentumAtLeast/1000.&&energy_deposit>kNeutralEnergyDepositAtLeast&&over_beta>kNeutralOverBetaAtLeast){
                 itr_track++;
             }
             else{

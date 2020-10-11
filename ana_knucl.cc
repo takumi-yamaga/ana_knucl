@@ -96,7 +96,7 @@ int main(int argc,char** argv)
     // ----------------------------------------------------------------
     // Event loop -----------------------------------------------------
     // ----------------------------------------------------------------
-    Int_t total_events = tree->GetEntries();
+    Int_t total_events = tree->GetEntries()/2.;
     //total_events = 10;
     std::cout<<"Start to fill histgrams. Entries = "<<total_events<<std::endl;
     for (Int_t i_event=0; i_event<total_events; i_event++) {
