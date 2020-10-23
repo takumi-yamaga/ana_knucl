@@ -8,6 +8,7 @@ AnalyzedData::AnalyzedData()
 
     pdg = TDatabasePDG::Instance();
     if(!pdg){
+        is_pdg_created = true;
         pdg = new TDatabasePDG();
         const char* tmp_root_sys = "/sw/packages/root/5.34.38";
         const char* env_root_sys = std::getenv("ROOTSYS");
@@ -21,6 +22,10 @@ AnalyzedData::AnalyzedData()
         pdg_file_name += "/etc/pdg_table.txt";
         pdg->ReadPDGTable(pdg_file_name.data());
     }
+    else{
+        is_pdg_created = false;
+    }
+
 
     Clear();
 }
@@ -29,7 +34,7 @@ AnalyzedData::~AnalyzedData()
 {
     Clear();
     if(random) delete random;
-    if(pdg) delete pdg;
+    if(is_pdg_created) delete pdg;
 }
 
 void AnalyzedData::Clear()

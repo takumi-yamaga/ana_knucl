@@ -46,7 +46,7 @@ class Analyzer
         void Print(std::vector<std::string>,std::vector<std::string>,const Int_t);
         void PrintSame(std::vector<std::string>,std::vector<Int_t>,std::vector<std::string>);
         void PrintAcceptance(std::vector<std::string> gene_names, std::vector<std::string> acce_names, Double_t maximum);
-        void Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice);
+        void Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice,bool is_fit=false);
         void SetHistogram(TH1*);
 
     protected:

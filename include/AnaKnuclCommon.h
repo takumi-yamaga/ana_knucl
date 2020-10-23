@@ -30,6 +30,11 @@ const Double_t kKaon0Mass = 0.497614;
 const Double_t kThreeHeMass = 2.80839;
 const Double_t kLightVelocity = 29.97; // cm/ns
 
+const Double_t kPlanckConstantReduced = 6.582119514e-22; // MeV s
+const Double_t kNuclearMagneton = 3.1524512550e-14; // MeV/T
+const Double_t kProtonMagneticMoment = 2.792847351;
+const Double_t kLambdaMagneticMoment = -0.613;
+
 const Double_t kVertexResolutionOfBeamXY = 1.0; // mm
 const Double_t kVertexResolutionOfBeamZ  =10.0; // mm
 
@@ -54,12 +59,75 @@ const Double_t kNeutralOverBetaAtLeast = 1.2;
 const Double_t kAnalysisEfficiency = 0.5;
 const Double_t kSelectionEfficiency = 0.8;
 
+// covariance target
+const Double_t kValCovarianceZero[9] = {
+    0.0000e+00,0.0000e+00,0.0000e+00,
+    0.0000e+00,0.0000e+00,0.0000e+00,
+    0.0000e+00,0.0000e+00,0.0000e+00
+};
+// covariance beam
+const Double_t kValCovarianceBeam[9] = {
+    3.8852e-04,0.0000e+00,0.0000e+00,
+    0.0000e+00,2.9573e-04,0.0000e+00,
+    0.0000e+00,0.0000e+00,2.0400e-02
+};
+// covariance proton
+inline void GetCovarianceProton(Double_t momentum, Double_t val_covariance[9]){
+    val_covariance[0] = momentum * (1.4038e-02 + 1.7051e-02*momentum);
+    val_covariance[1] = 0.;
+    val_covariance[2] = 0.;
+
+    val_covariance[3] = 0.;
+    val_covariance[4] = momentum * (1.3766e-02 + 1.7358e-02*momentum);
+    val_covariance[5] = 0.;
+
+    val_covariance[6] = 0.;
+    val_covariance[7] = 0.;
+    val_covariance[8] = momentum * (6.1509e-03 + 2.3576e-02*momentum);
+
+    return;
+}
+// covariance neutron
+inline void GetCovarianceNeutron(Double_t momentum, Double_t val_covariance[9]){
+    val_covariance[0] = momentum * (2.2299e-02 + 2.6878e-02*momentum);
+    val_covariance[1] = 0.;
+    val_covariance[2] = 0.;
+
+    val_covariance[3] = 0.;
+    val_covariance[4] = momentum * (2.2169e-02 + 2.7251e-02*momentum);
+    val_covariance[5] = 0.;
+
+    val_covariance[6] = 0.;
+    val_covariance[7] = 0.;
+    val_covariance[8] = momentum * (9.8380e-02 + 5.3162e-03*momentum);
+
+    return;
+}
+// covariance pi
+inline void GetCovariancePi(Double_t momentum, Double_t val_covariance[9]){
+    val_covariance[0] = momentum * (1.0219e-02 - 9.0273e-03*momentum);
+    val_covariance[1] = 0.;
+    val_covariance[2] = 0.;
+
+    val_covariance[3] = 0.;
+    val_covariance[4] = momentum * (1.0809e-02 - 1.0592e-02*momentum);
+    val_covariance[5] = 0.;
+
+    val_covariance[6] = 0.;
+    val_covariance[7] = 0.;
+    val_covariance[8] = momentum * (8.9558e-03 + 1.4078e-02*momentum);
+
+    return;
+}
+
 const Double_t kCovarianceLpn_LpDetection[7][4] = {
     {0.0000e+00,0.0000e+00,0.0000e+00,0.0000e+00}, // target
     {3.8852e-04,2.9573e-04,2.0400e-02,1.8371e-02}, // beam
-    {2.6103e-02,2.6007e-02,2.4774e-02,2.7949e-02}, // lambda
+    //{2.6103e-02,2.6007e-02,2.4774e-02,2.7949e-02}, // lambda
+    {0.0000e+00,0.0000e+00,0.0000e+00,0.0000e+00}, // target
     {2.6355e-02,2.6347e-02,2.4634e-02,3.2425e-02}, // proton
-    {3.6823e-02,3.6820e-02,4.0240e-02,4.6315e-02}, // neutron
+    //{3.6823e-02,3.6820e-02,4.0240e-02,4.6315e-02}, // neutron
+    {0.0000e+00,0.0000e+00,0.0000e+00,0.0000e+00}, // target
     {5.5298e-03,5.5954e-03,5.6179e-03,6.6288e-03}, // pi_from_lambda
     {2.3416e-02,2.3405e-02,2.1997e-02,2.6815e-02}  // nucleon_from_lambda
 };
@@ -105,27 +173,8 @@ const Double_t kCDCLayerRadius[15] = { // cm
     48.45
 };
 
-inline void GetParticles(const Int_t total_particles, const Double_t covariance[][4],TLorentzVector* lv_meas,Double_t* masses,TFitParticlePxPyPz* particles)
-{
-    TMatrixD* covariance_particles[7];
-    for(Int_t i_particle=0; i_particle<total_particles; ++i_particle){
-        Double_t elements[9] = {0.};
-        for(Int_t i_element=0; i_element<3; ++i_element){
-            for(Int_t j_element=0; j_element<3; ++j_element){
-                if( i_element == j_element ){
-                    elements[i_element*3+j_element] = covariance[i_particle][i_element];
-                }
-            }
-        }
-        //covariance_matrix->SetElements(elements);
-        covariance_particles[i_particle] = new TMatrixD(3,3,elements);
-    }
-
-    for(Int_t i_particle=0; i_particle<total_particles; ++i_particle){
-        TVector3 vec_momentum = lv_meas[i_particle].Vect();
-        particles[i_particle] = TFitParticlePxPyPz(Form("particle_%d",i_particle), Form("particle_%d",i_particle), &vec_momentum, masses[i_particle], covariance_particles[i_particle]);
-    }
-    return;
+inline double sign(double val){
+    return (val>0)-(val<0);
 }
 
 #endif

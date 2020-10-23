@@ -36,6 +36,7 @@ class AnalyzedData
     private:
         TRandom3* random;
         TDatabasePDG* pdg;
+        bool is_pdg_created;
 
     public:
         std::vector<Track*> measured_beam_tracks(){ return _measured_beam_tracks; }

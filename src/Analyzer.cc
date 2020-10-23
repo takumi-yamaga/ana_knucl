@@ -315,7 +315,7 @@ void Analyzer::PrintAcceptance(std::vector<std::string> gene_names, std::vector<
     return;
 }
 
-void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice){
+void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice, bool is_fit){
     TStyle* style = new TStyle("Plain","Plain Style (no colors/fill areas)");
     style->SetOptStat(0);
     style->SetOptTitle(0);
@@ -426,18 +426,16 @@ void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice){
     text->SetTextSize(0.07);
 
     std::vector<Double_t> x_vals;
-    std::vector<Double_t> x_errs;
     std::vector<Double_t> mean_vals;
     std::vector<Double_t> stddev_vals;
     for(Int_t bin=bin_first; bin<=bin_last; ++bin){
         x_vals.push_back(prof->GetBinCenter(bin)); 
-        x_errs.push_back(prof->GetBinWidth(bin)); 
         mean_vals.push_back(prof->GetBinContent(bin));
         stddev_vals.push_back(prof->GetBinError(bin));
     }
 
-    TPad* pad_mean = (TPad*)canvas->cd(2);
-    TGraphErrors* graph_mean = new TGraphErrors(x_vals.size(),x_vals.data(),mean_vals.data(),x_errs.data(),0);
+    canvas->cd(2);
+    TGraph* graph_mean = new TGraph(x_vals.size(),x_vals.data(),mean_vals.data());
     if(xy==kXSlice){
         graph_mean->GetXaxis()->SetTitle(th2->GetXaxis()->GetTitle());
         graph_mean->GetYaxis()->SetTitle(Form("mean of %s",th2->GetYaxis()->GetTitle()));
@@ -460,10 +458,12 @@ void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice){
     graph_mean->GetYaxis()->SetTitleSize(0.07);
     graph_mean->GetYaxis()->SetLabelSize(0.05);
     graph_mean->GetYaxis()->SetNdivisions(606);
+    graph_mean->SetMarkerStyle(20);
+    graph_mean->SetMarkerSize(2.0);
     graph_mean->Draw("apz");
 
-    TPad* pad_stddev = (TPad*)canvas->cd(3);
-    TGraphErrors* graph_stddev = new TGraphErrors(x_vals.size(),x_vals.data(),stddev_vals.data(),x_errs.data(),0);
+    canvas->cd(3);
+    TGraph* graph_stddev = new TGraph(x_vals.size(),x_vals.data(),stddev_vals.data());
     if(xy==kXSlice){
         graph_stddev->GetXaxis()->SetTitle(th2->GetXaxis()->GetTitle());
         graph_stddev->GetYaxis()->SetTitle(Form("stddev of %s",th2->GetYaxis()->GetTitle()));
@@ -486,7 +486,26 @@ void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice){
     graph_stddev->GetYaxis()->SetTitleSize(0.07);
     graph_stddev->GetYaxis()->SetLabelSize(0.05);
     graph_stddev->GetYaxis()->SetNdivisions(606);
+    graph_stddev->SetMarkerStyle(20);
+    graph_stddev->SetMarkerSize(2.0);
     graph_stddev->Draw("apz");
+    TF1* fit_stddev=0;
+    if(is_fit){
+        Double_t fit_min = (xval_max-xval_min)/5.;
+        Double_t fit_max = (xval_max-xval_min)*4./5.;
+        graph_stddev->Fit("pol0","q0","",fit_min,fit_max);
+        graph_stddev->Fit("pol1","q0","",fit_min,fit_max);
+        fit_stddev = new TF1("fit_stddev","pol1(0)",xval_min,xval_max);
+        if(graph_stddev->GetFunction("pol1")){
+            fit_stddev->SetParameters(graph_stddev->GetFunction("pol1")->GetParameters());
+            fit_stddev->SetLineColor(kRed-4);
+            fit_stddev->SetLineWidth(2);
+            fit_stddev->Draw("same");
+            std::cout << std::scientific << std::setprecision(4) << th2_name << " : " << " par0 : " << fit_stddev->GetParameter(0) << std::endl;
+            std::cout << std::scientific << std::setprecision(4) << th2_name << " : " << " par1 : " << fit_stddev->GetParameter(1) << std::endl;
+            std::cout << "-----" << std::endl;
+        }
+    }
 
     if(total_slice){
         Int_t i_pad = 4;
@@ -553,6 +572,9 @@ void Analyzer::Print2DSlice(std::string th2_name, Int_t xy, Int_t total_slice){
     delete text;
     delete graph_mean;
     delete graph_stddev;
+    if(fit_stddev){
+        delete fit_stddev;
+    }
 
     return;
 }

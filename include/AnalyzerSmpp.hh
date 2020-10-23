@@ -1,7 +1,7 @@
-// AnalyzerLpn.hh
+// AnalyzerSmpp.hh
 
-#ifndef AnalyzerLpn_hh
-#define AnalyzerLpn_hh
+#ifndef AnalyzerSmpp_hh
+#define AnalyzerSmpp_hh
 
 #include "KnuclRootData.h"
 #include "KnuclCommon.h"
@@ -27,14 +27,13 @@
 #include "TRandom3.h"
 #include "TLatex.h"
 #include "TDatabasePDG.h"
-#include "TRotation.h"
 
-class AnalyzerLpn : public Analyzer
+class AnalyzerSmpp : public Analyzer
 {
     public:
-        AnalyzerLpn();
-        AnalyzerLpn(std::string file_name,std::string option="");
-        ~AnalyzerLpn();
+        AnalyzerSmpp();
+        AnalyzerSmpp(std::string file_name,std::string option="");
+        ~AnalyzerSmpp();
 
         void DoAnalysis(MCData* mcData, DetectorData* detectorData, AnalyzedData*);
         void PrintHistogram(std::string file_name="");
